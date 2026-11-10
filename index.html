@@ -1,0 +1,533 @@
+<title>掼蛋记牌</title>
+<style>
+  :root {
+    --bg: #f6f1e6;
+    --surface: #fffdf8;
+    --surface-2: #e8e0cc;
+    --ink: #262220;
+    --ink-soft: #726a5c;
+    --accent: #1f6f54;
+    --accent-soft: #dceae3;
+    --warn: #b8792e;
+    --critical: #a3332b;
+    --line: #ded1b4;
+    --shadow: rgba(38, 34, 32, 0.14);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #16140f;
+      --surface: #221f19;
+      --surface-2: #2b2720;
+      --ink: #f2ecdf;
+      --ink-soft: #afa592;
+      --accent: #52b48c;
+      --accent-soft: #1e382e;
+      --warn: #dda454;
+      --critical: #e0847a;
+      --line: #3b3529;
+      --shadow: rgba(0, 0, 0, 0.45);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #16140f;
+    --surface: #221f19;
+    --surface-2: #2b2720;
+    --ink: #f2ecdf;
+    --ink-soft: #afa592;
+    --accent: #52b48c;
+    --accent-soft: #1e382e;
+    --warn: #dda454;
+    --critical: #e0847a;
+    --line: #3b3529;
+    --shadow: rgba(0, 0, 0, 0.45);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Work Sans', -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
+    padding: 20px 16px 48px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .sheet {
+    width: 100%;
+    max-width: 460px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  h1 {
+    font-family: 'Fraunces', 'PingFang SC', serif;
+    font-weight: 600;
+    font-size: 26px;
+    margin: 0;
+    letter-spacing: 0.01em;
+  }
+
+  .subtitle {
+    margin: 2px 0 0;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  .summary {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    box-shadow: 0 2px 10px var(--shadow);
+  }
+
+  .summary-figure {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .summary-value {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 34px;
+    line-height: 1;
+  }
+
+  .summary-max {
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  .summary-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .btn {
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 10px;
+    padding: 10px 14px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+    cursor: pointer;
+    transition: transform 0.08s ease, background 0.15s ease;
+  }
+
+  .btn:active { transform: scale(0.96); }
+
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  .btn-danger {
+    color: var(--critical);
+    border-color: var(--critical);
+  }
+
+  .btn-danger.confirming {
+    background: var(--critical);
+    color: var(--surface);
+  }
+
+  .felt {
+    background: var(--surface-2);
+    border-radius: 20px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .seat-row {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .seat-row--mid {
+    align-items: center;
+  }
+
+  .seat-center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-soft);
+    font-size: 11px;
+    gap: 2px;
+  }
+
+  .seat-center .suit {
+    font-size: 18px;
+    opacity: 0.5;
+  }
+
+  .seat {
+    flex: 1;
+    max-width: 128px;
+    font-family: 'Work Sans', 'PingFang SC', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    padding: 16px 8px;
+    border-radius: 14px;
+    border: none;
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: 0 2px 6px var(--shadow);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.08s ease;
+  }
+
+  .seat:active { transform: scale(0.97); }
+
+  .seat.active {
+    background: var(--accent);
+    color: var(--surface);
+    box-shadow: 0 4px 12px var(--shadow);
+  }
+
+  .ledger {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .card-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 12px 14px;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: opacity 0.15s ease, transform 0.08s ease;
+  }
+
+  .card-row:active { transform: scale(0.985); }
+
+  .card-row.is-depleted {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  .rank-index {
+    flex-shrink: 0;
+    width: 44px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .rank-glyph {
+    font-family: 'Fraunces', 'PingFang SC', serif;
+    font-weight: 600;
+    font-size: 22px;
+    line-height: 1.1;
+  }
+
+  .rank-index--rank .rank-rule { background: var(--accent); }
+  .rank-index--joker .rank-rule { background: var(--critical); }
+
+  .rank-rule {
+    width: 28px;
+    height: 3px;
+    border-radius: 2px;
+    margin-top: 4px;
+  }
+
+  .row-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .row-track {
+    height: 8px;
+    border-radius: 4px;
+    background: var(--surface-2);
+    overflow: hidden;
+  }
+
+  .row-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.2s ease, background 0.2s ease;
+  }
+
+  .row-chips {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    min-height: 18px;
+  }
+
+  .chip {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    background: var(--surface-2);
+    border-radius: 6px;
+    padding: 1px 6px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .row-count {
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    min-width: 54px;
+  }
+
+  .count-remaining {
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .count-sep, .count-total {
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<div class="sheet">
+  <header>
+    <h1>掼蛋记牌</h1>
+    <p class="subtitle">记大牌，不记小牌 · 点人再点牌</p>
+  </header>
+
+  <section class="summary">
+    <div class="summary-figure">
+      <span class="summary-value" id="totalRemaining">36</span>
+      <span class="summary-max">/ 36 张未出</span>
+    </div>
+    <div class="summary-actions">
+      <button class="btn" id="undoBtn" disabled>撤销</button>
+      <button class="btn btn-danger" id="resetBtn">重置</button>
+    </div>
+  </section>
+
+  <section class="felt" aria-label="选择出牌人">
+    <div class="seat-row">
+      <button class="seat" data-player="across">对家</button>
+    </div>
+    <div class="seat-row seat-row--mid">
+      <button class="seat" data-player="left">上家</button>
+      <div class="seat-center"><span class="suit">♠</span>出牌人</div>
+      <button class="seat" data-player="right">下家</button>
+    </div>
+    <div class="seat-row">
+      <button class="seat active" data-player="me">我</button>
+    </div>
+  </section>
+
+  <section class="ledger" id="ledger" aria-label="剩余大牌"></section>
+</div>
+
+<script>
+  var PLAYERS = [
+    { key: 'me', label: '我', chip: '我' },
+    { key: 'right', label: '下家', chip: '下' },
+    { key: 'across', label: '对家', chip: '对' },
+    { key: 'left', label: '上家', chip: '上' }
+  ];
+
+  var RANKS = [
+    { key: 'Q', glyph: 'Q', total: 8, kind: 'rank' },
+    { key: 'K', glyph: 'K', total: 8, kind: 'rank' },
+    { key: 'A', glyph: 'A', total: 8, kind: 'rank' },
+    { key: '2', glyph: '2', total: 8, kind: 'rank' },
+    { key: 'xiao', glyph: '小王', total: 2, kind: 'joker' },
+    { key: 'da', glyph: '大王', total: 2, kind: 'joker' }
+  ];
+
+  var TOTAL_TRACKED = RANKS.reduce(function (sum, r) { return sum + r.total; }, 0);
+  var STORAGE_KEY = 'jipai-state-v1';
+
+  function emptyCounts() {
+    var counts = {};
+    RANKS.forEach(function (r) {
+      counts[r.key] = { me: 0, right: 0, across: 0, left: 0 };
+    });
+    return counts;
+  }
+
+  function freshState() {
+    return { counts: emptyCounts(), history: [], active: 'me' };
+  }
+
+  function loadLocal() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (parsed && parsed.counts) return parsed;
+      }
+    } catch (e) { /* no-op: fall back to a fresh game */ }
+    return freshState();
+  }
+
+  function saveLocal() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* no-op */ }
+  }
+
+  var state = freshState();
+  var resetConfirming = false;
+  var resetTimer = null;
+
+  function remaining(rankKey) {
+    var rank = RANKS.filter(function (r) { return r.key === rankKey; })[0];
+    var played = PLAYERS.reduce(function (sum, p) { return sum + state.counts[rankKey][p.key]; }, 0);
+    return rank.total - played;
+  }
+
+  function totalRemaining() {
+    return RANKS.reduce(function (sum, r) { return sum + remaining(r.key); }, 0);
+  }
+
+  function fillColor(fraction) {
+    if (fraction > 0.5) return 'var(--accent)';
+    if (fraction > 0.2) return 'var(--warn)';
+    return 'var(--critical)';
+  }
+
+  function recordPlay(rankKey) {
+    if (remaining(rankKey) <= 0) return;
+    state.counts[rankKey][state.active] += 1;
+    state.history.push({ rank: rankKey, player: state.active });
+    saveLocal();
+    render();
+  }
+
+  function undo() {
+    if (state.history.length === 0) return;
+    var last = state.history.pop();
+    state.counts[last.rank][last.player] -= 1;
+    saveLocal();
+    render();
+  }
+
+  function performReset() {
+    state = freshState();
+    saveLocal();
+    render();
+  }
+
+  function setActive(playerKey) {
+    state.active = playerKey;
+    saveLocal();
+    render();
+  }
+
+  function render() {
+    document.getElementById('totalRemaining').textContent = String(totalRemaining());
+    document.getElementById('undoBtn').disabled = state.history.length === 0;
+
+    document.querySelectorAll('.seat').forEach(function (btn) {
+      btn.classList.toggle('active', btn.getAttribute('data-player') === state.active);
+    });
+
+    var ledger = document.getElementById('ledger');
+    ledger.innerHTML = '';
+    RANKS.forEach(function (r) {
+      var left = remaining(r.key);
+      var depleted = left <= 0;
+      var fraction = left / r.total;
+
+      var row = document.createElement('button');
+      row.className = 'card-row' + (depleted ? ' is-depleted' : '');
+      row.disabled = depleted;
+      row.addEventListener('click', function () { recordPlay(r.key); });
+
+      var chipsHtml = PLAYERS
+        .filter(function (p) { return state.counts[r.key][p.key] > 0; })
+        .map(function (p) { return '<span class="chip">' + p.chip + state.counts[r.key][p.key] + '</span>'; })
+        .join('');
+
+      row.innerHTML =
+        '<div class="rank-index rank-index--' + r.kind + '">' +
+          '<span class="rank-glyph">' + r.glyph + '</span>' +
+          '<div class="rank-rule"></div>' +
+        '</div>' +
+        '<div class="row-main">' +
+          '<div class="row-track"><div class="row-fill" style="width:' + (fraction * 100) + '%;background:' + fillColor(fraction) + '"></div></div>' +
+          '<div class="row-chips">' + chipsHtml + '</div>' +
+        '</div>' +
+        '<div class="row-count">' +
+          '<span class="count-remaining">' + left + '</span>' +
+          '<span class="count-sep">/</span><span class="count-total">' + r.total + '</span>' +
+        '</div>';
+
+      ledger.appendChild(row);
+    });
+  }
+
+  document.querySelectorAll('.seat').forEach(function (btn) {
+    btn.addEventListener('click', function () { setActive(btn.getAttribute('data-player')); });
+  });
+
+  document.getElementById('undoBtn').addEventListener('click', undo);
+
+  document.getElementById('resetBtn').addEventListener('click', function () {
+    var btn = document.getElementById('resetBtn');
+    if (!resetConfirming) {
+      resetConfirming = true;
+      btn.classList.add('confirming');
+      btn.textContent = '确认重置？';
+      resetTimer = setTimeout(function () {
+        resetConfirming = false;
+        btn.classList.remove('confirming');
+        btn.textContent = '重置';
+      }, 3000);
+    } else {
+      clearTimeout(resetTimer);
+      resetConfirming = false;
+      btn.classList.remove('confirming');
+      btn.textContent = '重置';
+      performReset();
+    }
+  });
+
+  function start(data) {
+    state = (data && data.counts) ? data : loadLocal();
+    render();
+  }
+
+  if (window.claude && window.claude.hot && window.claude.hot.snapshot) {
+    window.claude.hot.snapshot(function () { return state; });
+  }
+  if (window.claude && window.claude.hot && window.claude.hot.ready) {
+    window.claude.hot.ready(start);
+  } else {
+    start(window.claude && window.claude.hot ? window.claude.hot.data : null);
+  }
+</script>
