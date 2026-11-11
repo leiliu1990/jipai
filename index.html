@@ -246,7 +246,12 @@
     line-height: 1.1;
   }
 
+  .rank-glyph--wide {
+    font-size: 17px;
+  }
+
   .rank-index--rank .rank-rule { background: var(--accent); }
+  .rank-index--wild .rank-rule { background: var(--warn); }
   .rank-index--joker .rank-rule { background: var(--critical); }
 
   .rank-rule {
@@ -278,20 +283,27 @@
   }
 
   .row-chips {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
     gap: 5px;
-    flex-wrap: wrap;
-    min-height: 18px;
   }
 
   .chip {
     font-size: 11px;
     font-weight: 600;
-    color: var(--ink-soft);
-    background: var(--surface-2);
+    color: var(--ink);
+    background: var(--accent-soft);
     border-radius: 6px;
-    padding: 1px 6px;
+    padding: 2px 0;
+    text-align: center;
     font-variant-numeric: tabular-nums;
+  }
+
+  .chip.chip-zero {
+    color: var(--ink-soft);
+    background: transparent;
+    font-weight: 500;
+    opacity: 0.6;
   }
 
   .row-count {
@@ -365,7 +377,8 @@
     { key: 'Q', glyph: 'Q', total: 8, kind: 'rank' },
     { key: 'K', glyph: 'K', total: 8, kind: 'rank' },
     { key: 'A', glyph: 'A', total: 8, kind: 'rank' },
-    { key: '2', glyph: '2', total: 8, kind: 'rank' },
+    { key: '2', glyph: '2', total: 6, kind: 'rank' },
+    { key: 'red2', glyph: '红2', total: 2, kind: 'wild' },
     { key: 'xiao', glyph: '小王', total: 2, kind: 'joker' },
     { key: 'da', glyph: '大王', total: 2, kind: 'joker' }
   ];
@@ -469,13 +482,15 @@
       row.addEventListener('click', function () { recordPlay(r.key); });
 
       var chipsHtml = PLAYERS
-        .filter(function (p) { return state.counts[r.key][p.key] > 0; })
-        .map(function (p) { return '<span class="chip">' + p.chip + state.counts[r.key][p.key] + '</span>'; })
+        .map(function (p) {
+          var n = state.counts[r.key][p.key];
+          return '<span class="chip' + (n === 0 ? ' chip-zero' : '') + '">' + p.chip + n + '</span>';
+        })
         .join('');
 
       row.innerHTML =
         '<div class="rank-index rank-index--' + r.kind + '">' +
-          '<span class="rank-glyph">' + r.glyph + '</span>' +
+          '<span class="rank-glyph' + (r.glyph.length > 1 ? ' rank-glyph--wide' : '') + '">' + r.glyph + '</span>' +
           '<div class="rank-rule"></div>' +
         '</div>' +
         '<div class="row-main">' +
