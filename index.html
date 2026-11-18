@@ -144,63 +144,36 @@
     color: var(--surface);
   }
 
-  .felt {
-    background: var(--surface-2);
-    border-radius: 20px;
-    padding: 18px;
+  .ledger-head {
     display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .seat-row {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-  }
-
-  .seat-row--mid {
     align-items: center;
+    gap: 14px;
+    padding: 0 14px;
   }
 
-  .seat-center {
+  .head-spacer {
+    flex-shrink: 0;
+    width: 44px;
+  }
+
+  .head-grid {
     flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: var(--ink-soft);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 5px;
+  }
+
+  .head-label {
+    text-align: center;
     font-size: 11px;
-    gap: 2px;
-  }
-
-  .seat-center .suit {
-    font-size: 18px;
-    opacity: 0.5;
-  }
-
-  .seat {
-    flex: 1;
-    max-width: 128px;
-    font-family: 'Work Sans', 'PingFang SC', sans-serif;
     font-weight: 600;
-    font-size: 16px;
-    padding: 16px 8px;
-    border-radius: 14px;
-    border: none;
-    background: var(--surface);
-    color: var(--ink);
-    box-shadow: 0 2px 6px var(--shadow);
-    cursor: pointer;
-    transition: background 0.15s ease, color 0.15s ease, transform 0.08s ease;
+    color: var(--ink-soft);
+    letter-spacing: 0.04em;
   }
 
-  .seat:active { transform: scale(0.97); }
-
-  .seat.active {
-    background: var(--accent);
-    color: var(--surface);
-    box-shadow: 0 4px 12px var(--shadow);
+  .head-count-spacer {
+    flex-shrink: 0;
+    width: 54px;
   }
 
   .ledger {
@@ -217,18 +190,12 @@
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 14px;
-    padding: 12px 14px;
-    font-family: inherit;
-    text-align: left;
-    cursor: pointer;
-    transition: opacity 0.15s ease, transform 0.08s ease;
+    padding: 10px 14px;
+    transition: opacity 0.15s ease;
   }
-
-  .card-row:active { transform: scale(0.985); }
 
   .card-row.is-depleted {
     opacity: 0.45;
-    cursor: default;
   }
 
   .rank-index {
@@ -288,23 +255,34 @@
     gap: 5px;
   }
 
-  .chip {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--ink);
-    background: var(--accent-soft);
-    border-radius: 6px;
-    padding: 2px 0;
+  .player-cell {
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    background: var(--surface-2);
+    border: none;
+    border-radius: 8px;
+    padding: 9px 0;
     text-align: center;
+    cursor: pointer;
     font-variant-numeric: tabular-nums;
+    transition: background 0.12s ease, color 0.12s ease, transform 0.08s ease;
   }
 
-  .chip.chip-zero {
-    color: var(--ink-soft);
-    background: transparent;
-    font-weight: 500;
-    opacity: 0.6;
+  .player-cell:active { transform: scale(0.94); }
+
+  .player-cell.has-count {
+    color: var(--accent);
+    background: var(--accent-soft);
   }
+
+  .player-cell:disabled {
+    cursor: default;
+    opacity: 0.5;
+  }
+
+  .player-cell:disabled:active { transform: none; }
 
   .row-count {
     flex-shrink: 0;
@@ -334,7 +312,7 @@
 <div class="sheet">
   <header>
     <h1>掼蛋记牌</h1>
-    <p class="subtitle">记大牌，不记小牌 · 点人再点牌</p>
+    <p class="subtitle">记大牌，不记小牌 · 点格子记一张</p>
   </header>
 
   <section class="summary">
@@ -348,19 +326,11 @@
     </div>
   </section>
 
-  <section class="felt" aria-label="选择出牌人">
-    <div class="seat-row">
-      <button class="seat" data-player="across">对家</button>
-    </div>
-    <div class="seat-row seat-row--mid">
-      <button class="seat" data-player="left">上家</button>
-      <div class="seat-center"><span class="suit">♠</span>出牌人</div>
-      <button class="seat" data-player="right">下家</button>
-    </div>
-    <div class="seat-row">
-      <button class="seat active" data-player="me">我</button>
-    </div>
-  </section>
+  <div class="ledger-head" aria-hidden="true">
+    <div class="head-spacer"></div>
+    <div class="head-grid" id="ledgerHeadGrid"></div>
+    <div class="head-count-spacer"></div>
+  </div>
 
   <section class="ledger" id="ledger" aria-label="剩余大牌"></section>
 </div>
@@ -395,7 +365,7 @@
   }
 
   function freshState() {
-    return { counts: emptyCounts(), history: [], active: 'me' };
+    return { counts: emptyCounts(), history: [] };
   }
 
   function loadLocal() {
@@ -433,10 +403,10 @@
     return 'var(--critical)';
   }
 
-  function recordPlay(rankKey) {
+  function recordPlay(rankKey, playerKey) {
     if (remaining(rankKey) <= 0) return;
-    state.counts[rankKey][state.active] += 1;
-    state.history.push({ rank: rankKey, player: state.active });
+    state.counts[rankKey][playerKey] += 1;
+    state.history.push({ rank: rankKey, player: playerKey });
     saveLocal();
     render();
   }
@@ -455,19 +425,16 @@
     render();
   }
 
-  function setActive(playerKey) {
-    state.active = playerKey;
-    saveLocal();
-    render();
-  }
-
   function render() {
     document.getElementById('totalRemaining').textContent = String(totalRemaining());
     document.getElementById('undoBtn').disabled = state.history.length === 0;
 
-    document.querySelectorAll('.seat').forEach(function (btn) {
-      btn.classList.toggle('active', btn.getAttribute('data-player') === state.active);
-    });
+    var headGrid = document.getElementById('ledgerHeadGrid');
+    if (!headGrid.childElementCount) {
+      headGrid.innerHTML = PLAYERS
+        .map(function (p) { return '<span class="head-label">' + p.label + '</span>'; })
+        .join('');
+    }
 
     var ledger = document.getElementById('ledger');
     ledger.innerHTML = '';
@@ -476,15 +443,15 @@
       var depleted = left <= 0;
       var fraction = left / r.total;
 
-      var row = document.createElement('button');
+      var row = document.createElement('div');
       row.className = 'card-row' + (depleted ? ' is-depleted' : '');
-      row.disabled = depleted;
-      row.addEventListener('click', function () { recordPlay(r.key); });
 
-      var chipsHtml = PLAYERS
+      var cellsHtml = PLAYERS
         .map(function (p) {
           var n = state.counts[r.key][p.key];
-          return '<span class="chip' + (n === 0 ? ' chip-zero' : '') + '">' + p.chip + n + '</span>';
+          return '<button type="button" class="player-cell' + (n > 0 ? ' has-count' : '') +
+            '" data-rank="' + r.key + '" data-player="' + p.key + '"' +
+            (depleted ? ' disabled' : '') + '>' + p.chip + n + '</button>';
         })
         .join('');
 
@@ -495,20 +462,22 @@
         '</div>' +
         '<div class="row-main">' +
           '<div class="row-track"><div class="row-fill" style="width:' + (fraction * 100) + '%;background:' + fillColor(fraction) + '"></div></div>' +
-          '<div class="row-chips">' + chipsHtml + '</div>' +
+          '<div class="row-chips">' + cellsHtml + '</div>' +
         '</div>' +
         '<div class="row-count">' +
           '<span class="count-remaining">' + left + '</span>' +
           '<span class="count-sep">/</span><span class="count-total">' + r.total + '</span>' +
         '</div>';
 
+      row.querySelectorAll('.player-cell').forEach(function (cell) {
+        cell.addEventListener('click', function () {
+          recordPlay(cell.getAttribute('data-rank'), cell.getAttribute('data-player'));
+        });
+      });
+
       ledger.appendChild(row);
     });
   }
-
-  document.querySelectorAll('.seat').forEach(function (btn) {
-    btn.addEventListener('click', function () { setActive(btn.getAttribute('data-player')); });
-  });
 
   document.getElementById('undoBtn').addEventListener('click', undo);
 
